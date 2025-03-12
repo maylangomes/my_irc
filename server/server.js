@@ -11,36 +11,54 @@ const io = socketIo(server, { cors: { origin: "*" } });
 app.use(cors());
 
 let users = {};
-let channels = {};
+let channels = [];
 
 io.on("connection", (socket) => {
-    console.log("Nouvelle connexion");
+    console.log("Nouvelle connexion", socket.id);
 
     socket.on("set_username", (username) => {
+        if (!username) return;
+
         users[socket.id] = { username, channel: null };
-        console.log(`CONNEXION : ${username} - ID : ${socket.id} - Channel : ${users[socket.id].channel}`);
+        console.log(`CONNEXION : ${username} - ID : ${socket.id}`);
         socket.emit("message", "Bienvenue sur my_irc " + username);
     });
 
+    socket.on("get_channels", () => {
+        socket.emit("channel_list", channels);
+    });
+
+    socket.on("create_channel", (channel) => {
+        if (!channels.includes(channel)) {
+            channels.push(channel);
+            io.emit("channel_list", channels);
+            console.log(`Channel créé : ${channel}`);
+        }
+    });
+
     socket.on("join_channel", (channel) => {
-        if (!channels[channel]) {
-            channels[channel] = [];
+        if (!channels.includes(channel)) {
+            console.log("Channel inexistant.");
+            return;
         }
     
+        if (!users[socket.id]) {
+            console.log(`Erreur : utilisateur introuvable (ID: ${socket.id}).`);
+            return;
+        }
+
         users[socket.id].channel = channel;
-        channels[channel].push(socket.id);
         socket.join(channel);
-    
+
         console.log(`${users[socket.id].username} a rejoint ${channel}`);
         io.to(channel).emit("message", `${users[socket.id].username} a rejoint ${channel}`);
     });
 
-    socket.on("send_message", (message) => {
-        console.log(`Message reçu de ${socket.id} : ${message}`);
+    socket.on("send_message", ({ channel, message }) => {
         const user = users[socket.id];
         if (!user) {
-            console.log("user n'existe pas");
-            return
+            console.log(`Erreur : utilisateur introuvable (ID: ${socket.id})`);
+            return;
         }
 
         if (!user.channel) {
@@ -48,9 +66,7 @@ io.on("connection", (socket) => {
             return;
         }
 
-        if (user.channel) {
-            io.to(user.channel).emit("message", `${user.username}: ${message}`);
-        }
+        io.to(channel).emit("message", `${user.username}: ${message}`);
     });
 
     socket.on("disconnect", () => {

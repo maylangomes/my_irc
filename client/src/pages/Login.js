@@ -1,24 +1,23 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import io from "socket.io-client";
 
-const socket = io("http://localhost:5000", { transports: ["websocket"] });
-
-function Login({ setSocket }) {
+function Login({ socket }) {
   const [username, setUsername] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    if (username.trim() !== "") {
-      socket.emit("set_username", username);
-      setSocket(socket);
-      navigate("/chat");
-    }
+    if (!username.trim()) return;
+
+    socket.emit("set_username", username);
+
+    localStorage.setItem("username", username);
+
+    navigate("/channels");
   };
 
   return (
     <div>
-      <h1>Connexion</h1>
+      <h2>Connexion</h2>
       <input
         type="text"
         placeholder="Nom d'utilisateur"
