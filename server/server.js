@@ -69,6 +69,30 @@ io.on("connection", (socket) => {
         io.to(channel).emit("message", `${user.username}: ${message}`);
     });
 
+    socket.on("change_nickname", (newUsername) => {
+        if (!users[socket.id]) {
+            console.log(`Erreur : utilisateur introuvable (ID: ${socket.id})`);
+            return;
+        }
+    
+        const oldUsername = users[socket.id].username;
+        users[socket.id].username = newUsername;
+    
+        console.log(`Changement de pseudo : ${oldUsername} ➝ ${newUsername}`);
+        socket.emit("message", `Pseudo changé en ${newUsername}`);
+    });
+
+    socket.on("list_channels", (searchTerm) => {
+        let filteredChannels = channels;
+    
+        if (searchTerm) {
+            filteredChannels = channels.filter(channel => channel.includes(searchTerm));
+        }
+    
+        console.log(`Liste des channels demandée (filtre: "${searchTerm}"):`, filteredChannels);
+        socket.emit("channel_list", filteredChannels);
+    });
+
     socket.on("disconnect", () => {
         delete users[socket.id];
         console.log("Utilisateur déconnecté");

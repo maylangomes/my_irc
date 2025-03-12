@@ -31,10 +31,37 @@ function Chat({ socket }) {
 
   const handleSendMessage = () => {
     if (message.trim() !== "") {
-      socket.emit("send_message", { channel, message });
-      setMessage("");
+      if (message.startsWith("/nick ")) {
+        const newUsername = message.split(" ")[1];
+        if (newUsername) {
+          localStorage.setItem("username", newUsername);
+          socket.emit("change_nickname", newUsername);
+          setMessage("");
+        }
+      } else if (message.startsWith("/list")) {
+        const searchTerm = message.split(" ")[1] || "";
+        socket.emit("list_channels", searchTerm);
+        setMessage("");
+      } else {
+        socket.emit("send_message", { channel, message });
+        setMessage("");
+      }
     }
   };
+  
+  useEffect(() => {
+    socket.on("channel_list", (channelList) => {
+      setMessages((prev) => [
+        ...prev,
+        `Channels disponibles : ${channelList.join(", ") || "Aucun channel trouvé"}`,
+      ]);
+    });
+  
+    return () => {
+      socket.off("channel_list");
+    };
+  }, [socket]);
+  
 
   const handleLeaveChannel = () => {
     socket.emit("leave_channel", channel);
@@ -45,7 +72,7 @@ function Chat({ socket }) {
     <div>
       <h1>Chat - {channel}</h1>
 
-      <button onClick={handleLeaveChannel} style={{ marginBottom: "10px" }}>
+      <button onClick={handleLeaveChannel}>
         Retour aux channels
       </button>
 
