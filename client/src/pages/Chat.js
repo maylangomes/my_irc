@@ -46,7 +46,7 @@ function Chat({ socket }) {
       <h1>Chat - {channel}</h1>
 
       <button onClick={handleLeaveChannel} style={{ marginBottom: "10px" }}>
-        ⬅ Retour aux channels
+        Retour aux channels
       </button>
 
       <ul>

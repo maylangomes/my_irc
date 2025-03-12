@@ -5,7 +5,7 @@ import Login from "./pages/Login";
 import Channel from "./pages/Channel";
 import Chat from "./pages/Chat";
 
-const socket = io("http://localhost:5000", { transports: ["websocket"] });
+const socket = io("http://10.68.244.101:5000", { transports: ["websocket"] });
 
 function App() {
   return (
