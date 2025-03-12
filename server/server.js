@@ -93,6 +93,38 @@ io.on("connection", (socket) => {
         socket.emit("channel_list", filteredChannels);
     });
 
+    socket.on("create_channel", (channel) => {
+        if (!channel || channels.includes(channel)) {
+            socket.emit("message", `Le channel "${channel}" existe déjà ou est invalide.`);
+            return;
+        }
+    
+        channels.push(channel);
+        io.emit("channel_list", channels);
+        socket.emit("channel_created", channel);
+    
+        console.log(`Channel créé : ${channel}`);
+    });
+
+    socket.on("delete_channel", (channel) => {
+        if (!channels.includes(channel)) {
+            socket.emit("channel_not_found", channel);
+            return;
+        }
+    
+        channels = channels.filter(ch => ch !== channel);
+    
+        io.to(channel).emit("message", `Channel "${channel}" a été supprimé.`);
+        io.socketsLeave(channel);
+    
+        io.emit("channel_list", channels);
+        socket.emit("channel_deleted", channel);
+    
+        console.log(`Channel supprimé : ${channel}`);
+    });
+    
+    
+
     socket.on("disconnect", () => {
         delete users[socket.id];
         console.log("Utilisateur déconnecté");

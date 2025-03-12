@@ -31,23 +31,40 @@ function Chat({ socket }) {
 
   const handleSendMessage = () => {
     if (message.trim() !== "") {
-      if (message.startsWith("/nick ")) {
+      if (message.startsWith("/delete ")) {
+        const channelToDelete = message.split(" ")[1];
+        if (channelToDelete) {
+          socket.emit("delete_channel", channelToDelete);
+          setMessage("");
+          return;
+        }
+      } else if (message.startsWith("/nick ")) {
         const newUsername = message.split(" ")[1];
         if (newUsername) {
           localStorage.setItem("username", newUsername);
           socket.emit("change_nickname", newUsername);
           setMessage("");
+          return;
         }
       } else if (message.startsWith("/list")) {
         const searchTerm = message.split(" ")[1] || "";
         socket.emit("list_channels", searchTerm);
         setMessage("");
-      } else {
-        socket.emit("send_message", { channel, message });
-        setMessage("");
-      }
+        return;
+      } else if (message.startsWith("/create ")) {
+        const newChannel = message.split(" ")[1];
+        if (newChannel) {
+          socket.emit("create_channel", newChannel);
+          setMessage("");
+          return;
+        }
+      } 
+  
+      socket.emit("send_message", { channel, message });
+      setMessage("");
     }
   };
+  
   
   useEffect(() => {
     socket.on("channel_list", (channelList) => {
@@ -57,10 +74,26 @@ function Chat({ socket }) {
       ]);
     });
   
+    socket.on("channel_created", (channel) => {
+      setMessages((prev) => [...prev, `Channel créé : ${channel}`]);
+    });
+
+    socket.on("channel_deleted", (channel) => {
+      setMessages((prev) => [...prev, `Channel "${channel}" supprimé avec succès.`]);
+    });
+  
+    socket.on("channel_not_found", (channel) => {
+      setMessages((prev) => [...prev, `Le channel "${channel}" n'existe pas.`]);
+    });
+  
     return () => {
       socket.off("channel_list");
+      socket.off("channel_created");
+      socket.off("channel_deleted");
+      socket.off("channel_not_found");
     };
   }, [socket]);
+  
   
 
   const handleLeaveChannel = () => {
