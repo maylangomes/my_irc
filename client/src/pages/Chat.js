@@ -31,7 +31,11 @@ function Chat({ socket }) {
 
   const handleSendMessage = () => {
     if (message.trim() !== "") {
-      if (message.startsWith("/join ")) {
+      if (message.startsWith("/users")) {
+        socket.emit("list_users", channel);
+        setMessage("");
+        return;
+      } else if (message.startsWith("/join ")) {
         const channelToJoin = message.split(" ")[1];
         if (channelToJoin) {
           socket.emit("join_channel", channelToJoin);
@@ -99,12 +103,20 @@ function Chat({ socket }) {
     socket.on("channel_not_found", (channel) => {
       setMessages((prev) => [...prev, `Le channel "${channel}" n'existe pas.`]);
     });
+
+    socket.on("user_list", (usersInChannel) => {
+      setMessages((prev) => [
+        ...prev,
+        `Utilisateurs connectés : ${usersInChannel.join(", ") || "Aucun utilisateur"}`,
+      ]);
+    });
   
     return () => {
       socket.off("channel_list");
       socket.off("channel_created");
       socket.off("channel_deleted");
       socket.off("channel_not_found");
+      socket.off("user_list");
     };
   }, [socket]);
 

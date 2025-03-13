@@ -155,8 +155,20 @@ io.on("connection", (socket) => {
         console.log(`${users[socket.id].username} a rejoint ${channel}`);
         io.to(channel).emit("message", `${users[socket.id].username} a rejoint ${channel}`);
         socket.emit("channel_joined", channel);
-    });    
+    });
     
+    socket.on("list_users", (channel) => {
+        if (!channels.includes(channel)) {
+            socket.emit("message", `Le channel "${channel}" n'existe pas.`);
+            return;
+        }
+    
+        const usersInChannel = Object.values(users)
+            .filter(user => user.channel === channel)
+            .map(user => user.username);
+    
+        socket.emit("user_list", usersInChannel);
+    });
     
 
     socket.on("disconnect", () => {
