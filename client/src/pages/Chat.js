@@ -31,7 +31,15 @@ function Chat({ socket }) {
 
   const handleSendMessage = () => {
     if (message.trim() !== "") {
-      if (message.startsWith("/leave")) {
+      if (message.startsWith("/join ")) {
+        const channelToJoin = message.split(" ")[1];
+        if (channelToJoin) {
+          socket.emit("join_channel", channelToJoin);
+          setMessage("");
+          navigate(`/chat/${channelToJoin}`);
+          return;
+        }
+      } else if (message.startsWith("/leave")) {
         socket.emit("leave_channel", channel);
         setMessage("");
         navigate("/channels");
@@ -125,6 +133,11 @@ function Chat({ socket }) {
         placeholder="Message"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleSendMessage();
+          }
+        }}
       />
       <button onClick={handleSendMessage}>Envoyer</button>
     </div>

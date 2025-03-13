@@ -136,6 +136,26 @@ io.on("connection", (socket) => {
         
         users[socket.id].channel = null;
     });
+
+    socket.on("join_channel", (channel) => {
+        if (!channels.includes(channel)) {
+            console.log(`Erreur : channel "${channel}" inexistant.`);
+            socket.emit("channel_not_found", channel);
+            return;
+        }
+    
+        if (!users[socket.id]) {
+            console.log(`Erreur : utilisateur introuvable (ID: ${socket.id}).`);
+            return;
+        }
+    
+        users[socket.id].channel = channel;
+        socket.join(channel);
+    
+        console.log(`${users[socket.id].username} a rejoint ${channel}`);
+        io.to(channel).emit("message", `${users[socket.id].username} a rejoint ${channel}`);
+        socket.emit("channel_joined", channel);
+    });    
     
     
 
