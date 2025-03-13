@@ -31,7 +31,12 @@ function Chat({ socket }) {
 
   const handleSendMessage = () => {
     if (message.trim() !== "") {
-      if (message.startsWith("/delete ")) {
+      if (message.startsWith("/leave")) {
+        socket.emit("leave_channel", channel);
+        setMessage("");
+        navigate("/channels");
+        return;
+      } else if (message.startsWith("/delete ")) {
         const channelToDelete = message.split(" ")[1];
         if (channelToDelete) {
           socket.emit("delete_channel", channelToDelete);
@@ -58,12 +63,13 @@ function Chat({ socket }) {
           setMessage("");
           return;
         }
-      } 
-  
-      socket.emit("send_message", { channel, message });
-      setMessage("");
+      } else {
+        socket.emit("send_message", { channel, message });
+        setMessage("");
+      }
     }
   };
+  
   
   
   useEffect(() => {
@@ -93,8 +99,7 @@ function Chat({ socket }) {
       socket.off("channel_not_found");
     };
   }, [socket]);
-  
-  
+
 
   const handleLeaveChannel = () => {
     socket.emit("leave_channel", channel);

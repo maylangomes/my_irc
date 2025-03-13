@@ -122,6 +122,20 @@ io.on("connection", (socket) => {
     
         console.log(`Channel supprimé : ${channel}`);
     });
+
+    socket.on("leave_channel", (channel) => {
+        if (!users[socket.id] || users[socket.id].channel !== channel) {
+            console.log(`Erreur : ${users[socket.id]?.username || "Utilisateur inconnu"} n'est pas dans ${channel}`);
+            return;
+        }
+    
+        socket.leave(channel);
+        console.log(`${users[socket.id].username} a quitté ${channel}`);
+        
+        io.to(channel).emit("message", `${users[socket.id].username} a quitté ${channel}`);
+        
+        users[socket.id].channel = null;
+    });
     
     
 
